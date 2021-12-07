@@ -11,6 +11,7 @@
                 1 构建KDtree部分
                 2 搜索KDtree部分
                 3 辅助验证部分
+这里实现的暂时是最临近，K临近还没有实现！
 """
 import numpy as np
 import time
@@ -67,7 +68,7 @@ class CreateTree:
 # 首先，定义一个nametuple，分别存储最近点坐标和最近距离
 Nearest_result = namedtuple("Nearest_rstult", "nearest_point nearest_dis")
 # 下面构建搜索函数
-def Nearest(kdtree, target):
+def Nearest(kdtree, target, k):
     """
     搜索函数
     :param tree: 前面构建好的tree
@@ -75,7 +76,19 @@ def Nearest(kdtree, target):
     :param k: k个最临近点
     :return: 最近点
     """
+    Result = []  # 用于存储k
     dimension = len(target)  # 数据的维度
+
+    # def distance(_node, target):
+    #     """
+    #     计算距离函数，尝试获取K临近
+    #     :param _node: 节点
+    #     :param target: 目标点
+    #     :return: 返回什么我还没想好
+    #     """
+    #     if len(Result) < k:  # 判断当前存储列表中的元素个数是否小于设定值k
+    #         pass
+
 
 
 
@@ -106,7 +119,26 @@ def Nearest(kdtree, target):
         trav_node1 = traversal(closer_node, target, _dis)  # 能一直递归到叶节点，trav_node1就是叶点
         nearest = trav_node1.nearest_point  # 暂时以叶点为“当前最近点”
         dis = trav_node1.nearest_dis  # 获取目标点到“当前最近点”的距离
-        # Result.append([nearest, dis])
+
+        # 试验：
+        # if nearest not in [i[0] for i in Result]:
+        #     if len(Result) < k:
+        #         Result.append([nearest, dis])
+        #     else:
+        #         Result.sort(key=lambda x: x[1])
+        #         Result.pop()
+        #         Result.append([nearest, dis])
+
+
+
+        if len(Result) < k and nearest not in [i[0] for i in Result]:
+            Result.append([nearest, dis])
+        else:
+            Result.sort(key=lambda x: x[1])
+            if Result[-1][1] > dis and nearest not in [i[0] for i in Result]:
+                Result.pop()
+                Result.append([nearest, dis])
+
         # 判断当前叶点距离与超球体半径的大小关系
         if dis < _dis:  # 若小于
             _dis = dis  # 更新超球体半径
@@ -123,6 +155,13 @@ def Nearest(kdtree, target):
             nearest = split_axis  # 更新最近点
             dis = point_dist  # 更新最近距离
             _dis = dis  # 更新超球体半径
+            if len(Result) < k and nearest not in [i[0] for i in Result]:
+                Result.append([nearest, dis])
+            else:
+                Result.sort(key=lambda x: x[1])
+                if Result[-1][1] > dis and nearest not in [i[0] for i in Result]:
+                    Result.pop()
+                    Result.append([nearest, dis])
 
         # 4.检查另一个分支内是否存在更近的点
         trav_node2 = traversal(futher_node, target, _dis)  # 能一直递归到叶节点，trav_node2就是叶点
@@ -130,6 +169,15 @@ def Nearest(kdtree, target):
         if trav_node2.nearest_dis < _dis:  # 如果另一个叶点的距离更小
             nearest = trav_node2.nearest_point  # 更新最近点
             dis = trav_node2.nearest_dis  # 更新最近距离
+
+            #  试验：
+            if len(Result) < k and nearest not in [i[0] for i in Result]:
+                Result.append([nearest, dis])
+            else:
+                Result.sort(key=lambda x: x[1])
+                if Result[-1][1] > dis and nearest not in [i[0] for i in Result]:
+                    Result.pop()
+                    Result.append([nearest, dis])
 
         return Nearest_result(nearest, dis)  # 这样就全部计算完了，可以返回值了
 
@@ -144,8 +192,8 @@ def Nearest(kdtree, target):
 
 
 if __name__ == "__main__":
-    data = [[2, 3], [5, 4], [9, 6], [4, 7], [8, 1], [7, 2]]
+    data = [[2, 3], [5, 4], [9, 6], [4, 7], [8, 1], [7, 2], [8, 5], [4, 4], [6, 7], [1, 9]]
     kd = CreateTree(data)
     # print(kd.root)
-    ret = Nearest(kd, (6, 5))
+    ret = Nearest(kd, (6, 5), 3)
     print(ret)
